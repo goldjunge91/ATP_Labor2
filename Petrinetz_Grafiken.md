@@ -184,7 +184,7 @@ title: Verriegelungslogik für Handbetrieb
 stateDiagram-v2
     direction TB
     
-    classDef handState fill:#FFE4B5,stroke:#333,stroke-width:2px
+    classDef handState fill:#FFE4B5,stroke:#333,stroke-width:2px,color:#000000
     classDef lockState fill:#DDA0DD,stroke:#333,stroke-width:2px
     classDef outputState fill:#98FB98,stroke:#333,stroke-width:2px
     
@@ -229,7 +229,7 @@ stateDiagram-v2
     direction TB
     
     classDef initState fill:#90EE90,stroke:#333,stroke-width:2px
-    classDef modeState fill:#FFE4B5,stroke:#333,stroke-width:2px
+    classDef modeState fill:#FFE4B5,stroke:#333,stroke-width:2px,color:#000000
     classDef operationState fill:#87CEEB,stroke:#333,stroke-width:2px
     
     [*] --> SystemReset
