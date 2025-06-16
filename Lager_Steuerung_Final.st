@@ -5,7 +5,7 @@ VAR
     AUTO : BOOL := FALSE;
     
     (* Petrinetz Stellen *)
-    S_INIT : BOOL := TRUE;
+    S_INIT : BOOL := TRUE;  (* Startzustand *)
     S_HAND : BOOL := FALSE;
     S_AUTO : BOOL := FALSE;
     S0 : BOOL := FALSE;
@@ -33,6 +33,8 @@ VAR
     (* Hilfsvariablen *)
     START_Alt : BOOL := FALSE;
     START_Flanke : BOOL := FALSE;
+    AUTO_Alt : BOOL := FALSE;
+    AUTO_Gesperrt : BOOL := FALSE;
     Status_Text : STRING := 'System bereit';
     
     (* Eingaenge *)
@@ -57,22 +59,35 @@ VAR
     Vereinzeler_Auf_Out : BOOL := %QX0.0;
     Band_Drehrichtung : BOOL := %QX0.1;
     Bandgeschwindigkeit : WORD := %QW2;
+	Bandgeschwindigkeit_max : WORD := 32500;
+	Bandgeschwindigkeit_min : WORD := 0;
 END_VAR
 
-(* START Flankenauswertung *)
+(* START Flankenauswertung - ID 04 *)
 START_Flanke := START AND NOT START_Alt;
 START_Alt := START;
 
-(* Initialisierung bei START-Flanke *)
+(* AUTO-Sperrung bei START=TRUE - ID 03 *)
+IF START THEN
+    AUTO_Gesperrt := TRUE;
+    AUTO := AUTO_Alt;  (* AUTO einfrieren *)
+ELSE
+    AUTO_Gesperrt := FALSE;
+    AUTO_Alt := AUTO;  (* AUTO-Wert merken *)
+END_IF;
+
+(* Initialisierung bei START-Flanke - ID 01,02 *)
 IF START_Flanke THEN
     IF AUTO THEN
         S_INIT := FALSE;
         S_AUTO := TRUE;
-        S0 := TRUE;
+        S0 := TRUE;         (* Automatik startet in S0 *)
         Teile_Zaehler := 0;
+        Status_Text := 'Automatikbetrieb aktiv';
     ELSE
         S_INIT := FALSE;
         S_HAND := TRUE;
+        Status_Text := 'Handbetrieb aktiv';
     END_IF;
 END_IF;
 
@@ -83,7 +98,20 @@ IF NOT START THEN
     S_AUTO := FALSE;
     S0 := FALSE; S1 := FALSE; S2 := FALSE; S3 := FALSE;
     S4 := FALSE; S5 := FALSE; S6 := FALSE;
-    Timer_Band(IN := FALSE);
+    Timer_Band(IN := FALSE, PT := T#2s);
+    Status_Text := 'System bereit';
+END_IF;
+
+(* Ausgaenge zuruecksetzen bei INIT *)
+IF S_INIT THEN
+    Schieber_Ausfahren := FALSE;
+    Werkstueck_Ansaugen := FALSE;
+    Werkstueck_Loslassen := FALSE;
+    Arm_Zum_Lager := FALSE;
+    Arm_Zum_Band := FALSE;
+    Vereinzeler_Auf_Out := FALSE;
+    Band_Drehrichtung := FALSE;
+    Bandgeschwindigkeit := 0;
 END_IF;
 
 (* HANDBETRIEB *)
@@ -135,12 +163,16 @@ IF S_AUTO THEN
         Teile_Zaehler := Teile_Zaehler + 1;
     END_IF;
     
-    (* T6: Band starten - Zeittransition *)
-    Timer_Band(IN := S5 AND NOT S6 AND NOT LS1_Frei, PT := T#2s);
+    (* T6: Band starten - Zeittransition korrigiert *)
+    IF (S5 AND NOT S6 AND NOT LS1_Frei) THEN
+        Timer_Band(IN := TRUE, PT := T#2s);
+    ELSE
+        Timer_Band(IN := FALSE, PT := T#2s);
+    END_IF;
+    
     IF Timer_Band.Q THEN
         S5 := FALSE;
         S6 := TRUE;
-        Timer_Band(IN := FALSE);
     END_IF;
     
     (* T7: Zyklus beenden *)
@@ -162,17 +194,3 @@ IF S_AUTO THEN
         Bandgeschwindigkeit := 0;
     END_IF;
 END_IF;
-
-(* Ausgaenge zuruecksetzen bei INIT *)
-IF S_INIT THEN
-    Schieber_Ausfahren := FALSE;
-    Werkstueck_Ansaugen := FALSE;
-    Werkstueck_Loslassen := FALSE;
-    Arm_Zum_Lager := FALSE;
-    Arm_Zum_Band := FALSE;
-    Vereinzeler_Auf_Out := FALSE;
-    Band_Drehrichtung := FALSE;
-    Bandgeschwindigkeit := 0;
-END_IF;
-
-END_PROGRAM
