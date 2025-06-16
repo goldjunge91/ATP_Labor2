@@ -330,7 +330,6 @@ title: Fehlerzustände und Störungsbehandlung
 ---
 stateDiagram-v2
     direction TB
-    
     classDef normalState fill:#90EE90,stroke:#333,stroke-width:2px
     classDef errorState fill:#FF6B6B,stroke:#333,stroke-width:2px
     classDef waitState fill:#FFFF99,stroke:#333,stroke-width:2px
