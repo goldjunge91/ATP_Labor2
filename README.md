@@ -39,16 +39,6 @@ Entwicklung eines Steuerungstechnisch Interpretierten Petrinetzes (SIPN) für ei
 6. Band 2s mit Maximalgeschwindigkeit
 7. Zurück zu Schritt 1
 
-## Installation & Verwendung
-
-### 1. CoDeSys-Projekt erstellen
-```
-1. Neues Projekt in CoDeSys anlegen
-2. ST-Code aus Lager_Steuerung_Final.st importieren
-3. Programm-Name von "POU" zu "Lager_Steuerung" ändern
-4. I/O-Konfiguration gemäß Dokumentation einrichten
-5. Visualisierung nach Vorlage erstellen
-```
 
 ### 2. Hardware-Setup
 ```
@@ -58,13 +48,6 @@ Entwicklung eines Steuerungstechnisch Interpretierten Petrinetzes (SIPN) für ei
 - Ausgänge QX0.0-QX0.1 + QW2: Pufferstrecke-Aktoren
 ```
 
-### 3. Inbetriebnahme
-```
-1. Testplan systematisch abarbeiten
-2. Handbetrieb testen
-3. Automatikbetrieb validieren
-4. Sicherheitsfunktionen prüfen
-```
 
 ## Code-Struktur aktuell
 
