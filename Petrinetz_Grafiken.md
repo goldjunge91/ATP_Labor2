@@ -142,39 +142,6 @@ stateDiagram-v2
     class BandStart,BandLaeuft bandState
 ```
 
-## Kommunikationsplätze und Testkanten
-
-```mermaid
----
-title: Testkanten und Inhibitor-Kanten
----
-stateDiagram-v2
-    direction TB
-    
-    classDef normalState fill:#87CEEB,stroke:#333,stroke-width:2px
-    classDef testState fill:#FFFF99,stroke:#333,stroke-width:2px
-    classDef inhibitorState fill:#FF6B6B,stroke:#333,stroke-width:2px
-    
-    S1: S1 Schieber ausfahren
-    T2: T2 Transition
-    S2: S2 Arm zum Lager
-    LS1F: LS1_frei Testkante
-    Störung: Störung_aktiv Inhibitor
-    
-    S1 --> T2
-    T2 --> S2
-    LS1F --> T2 : Test gestrichelt
-    Störung --> T2 : Blockiert mit Kreis
-    
-    class S1,S2 normalState
-    class LS1F testState
-    class Störung inhibitorState
-```
-
-**Erklärung:**
-- **Testkante (LS1F)**: Prüft Bedingung ohne Token zu verbrauchen
-- **Inhibitor-Kante (Störung)**: Blockiert Transition wenn aktiv
-
 ## Verriegelungen (Schlüsselplätze)
 
 ```mermaid
@@ -318,14 +285,11 @@ gantt
 
 **Gesamtzykluszeit: ca. 16 Sekunden** (ohne Wartezeiten und Sicherheitspausen)
 
-Timeout pro Schritt: 30s (Störungsüberwachung)  
-Band-Timer: 2s (Zeittransition)
-
 ## Fehlerzustände
 
 ```mermaid
 ---
-title: Fehlerzustände und Störungsbehandlung
+title: Fehlerzustände und Systemabbruch
 ---
 stateDiagram-v2
     direction TB
@@ -333,54 +297,47 @@ stateDiagram-v2
     classDef normalState fill:#90EE90,stroke:#333,stroke-width:2px
     classDef errorState fill:#FF6B6B,stroke:#333,stroke-width:2px
     classDef waitState fill:#FFFF99,stroke:#333,stroke-width:2px
+    classDef backgroundBox fill:#F0F0F0,stroke:#666,stroke-width:6px
     
-    [*] --> S0
-    S0: S0 Bereit
-    S1: S1 Schieber ausfahren
-    S2: S2 Arm zum Lager
-    S3: S3 Ansaugen
-    S4: S4 Transport zum Band
-    S5: S5 Ablegen
-    S6: S6 Band läuft
-    STÖRUNG: STÖRUNG Fehlerbehandlung
-    INIT: INIT System Reset
+    [*] --> Fehlerbehandlung
     
-    %% Normale Ausführung
-    S0 --> S1 : Normal
-    S1 --> S2 : Normal
-    S2 --> S3 : Normal
-    S3 --> S4 : Normal
-    S4 --> S5 : Normal
-    S5 --> S6 : Normal
-    S6 --> S0 : Normal
-    
-    %% Wartezustände
-    S0 --> S0 : Lager leer wartet
-    S0 --> S0 : LS1 belegt wartet
-    
-    %% Timeout-Fehler
-    S1 --> STÖRUNG : Timeout 30s
-    S2 --> STÖRUNG : Timeout 30s
-    S3 --> STÖRUNG : Timeout 30s
-    S4 --> STÖRUNG : Timeout 30s
-    S5 --> STÖRUNG : Timeout 30s
-    S6 --> STÖRUNG : Timeout 30s
-    
-    %% START gleich 0 Abbruch
-    S1 --> INIT : START gleich 0
-    S2 --> INIT : START gleich 0
-    S3 --> INIT : START gleich 0
-    S4 --> INIT : START gleich 0
-    S5 --> INIT : START gleich 0
-    S6 --> INIT : START gleich 0
-    
-    %% Fehlerbehandlung
-    STÖRUNG --> S0 : Störung quittiert
-    INIT --> [*] : System Reset
+    state Fehlerbehandlung {
+        [*] --> S0
+        S0: S0 Bereit
+        S1: S1 Schieber ausfahren
+        S2: S2 Arm zum Lager
+        S3: S3 Ansaugen
+        S4: S4 Transport zum Band
+        S5: S5 Ablegen
+        S6: S6 Band läuft
+        INIT: INIT System Reset
+        
+        %% Normale Ausführung
+        S0 --> S1 : Normal
+        S1 --> S2 : Normal
+        S2 --> S3 : Normal
+        S3 --> S4 : Normal
+        S4 --> S5 : Normal
+        S5 --> S6 : Normal
+        S6 --> S0 : Normal
+        
+        %% Wartezustände
+        S0 --> S0 : Lager leer wartet
+        S0 --> S0 : LS1 belegt wartet
+        
+        %% START gleich 0 Abbruch
+        S1 --> INIT : START gleich 0
+        S2 --> INIT : START gleich 0
+        S3 --> INIT : START gleich 0
+        S4 --> INIT : START gleich 0
+        S5 --> INIT : START gleich 0
+        S6 --> INIT : START gleich 0
+        INIT --> [*] : System Reset
+    }
     
     class S1,S2,S3,S4,S5,S6 normalState
-    class STÖRUNG errorState
     class S0 waitState
+    class Fehlerbehandlung backgroundBox
 ```
 
 ## I/O-Zuordnung kompakt
