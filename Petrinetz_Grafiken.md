@@ -318,9 +318,8 @@ gantt
 
 **Gesamtzykluszeit: ca. 16 Sekunden** (ohne Wartezeiten und Sicherheitspausen)
 
-Timeout pro Schritt: 30s (Störungsüberwachung)
+Timeout pro Schritt: 30s (Störungsüberwachung)  
 Band-Timer: 2s (Zeittransition)
-```
 
 ## Fehlerzustände
 
@@ -330,20 +329,21 @@ title: Fehlerzustände und Störungsbehandlung
 ---
 stateDiagram-v2
     direction TB
+    
     classDef normalState fill:#90EE90,stroke:#333,stroke-width:2px
     classDef errorState fill:#FF6B6B,stroke:#333,stroke-width:2px
     classDef waitState fill:#FFFF99,stroke:#333,stroke-width:2px
     
     [*] --> S0
-    S0: S0 (Bereit)
-    S1: S1 (Schieber ausfahren)
-    S2: S2 (Arm zum Lager)
-    S3: S3 (Ansaugen)
-    S4: S4 (Transport zum Band)
-    S5: S5 (Ablegen)
-    S6: S6 (Band läuft)
-    STÖRUNG: STÖRUNG (Fehlerbehandlung)
-    INIT: INIT (System Reset)
+    S0: S0 Bereit
+    S1: S1 Schieber ausfahren
+    S2: S2 Arm zum Lager
+    S3: S3 Ansaugen
+    S4: S4 Transport zum Band
+    S5: S5 Ablegen
+    S6: S6 Band läuft
+    STÖRUNG: STÖRUNG Fehlerbehandlung
+    INIT: INIT System Reset
     
     %% Normale Ausführung
     S0 --> S1 : Normal
@@ -355,30 +355,30 @@ stateDiagram-v2
     S6 --> S0 : Normal
     
     %% Wartezustände
-    S0 --> S0 : Lager leer (wartet)
-    S0 --> S0 : LS1 belegt (wartet)
+    S0 --> S0 : Lager leer wartet
+    S0 --> S0 : LS1 belegt wartet
     
     %% Timeout-Fehler
-    S1 --> STÖRUNG : Timeout (30s)
-    S2 --> STÖRUNG : Timeout (30s)
-    S3 --> STÖRUNG : Timeout (30s)
-    S4 --> STÖRUNG : Timeout (30s)
-    S5 --> STÖRUNG : Timeout (30s)
-    S6 --> STÖRUNG : Timeout (30s)
+    S1 --> STÖRUNG : Timeout 30s
+    S2 --> STÖRUNG : Timeout 30s
+    S3 --> STÖRUNG : Timeout 30s
+    S4 --> STÖRUNG : Timeout 30s
+    S5 --> STÖRUNG : Timeout 30s
+    S6 --> STÖRUNG : Timeout 30s
     
-    %% START=0 Abbruch
-    S1 --> INIT : START=0
-    S2 --> INIT : START=0
-    S3 --> INIT : START=0
-    S4 --> INIT : START=0
-    S5 --> INIT : START=0
-    S6 --> INIT : START=0
+    %% START gleich 0 Abbruch
+    S1 --> INIT : START gleich 0
+    S2 --> INIT : START gleich 0
+    S3 --> INIT : START gleich 0
+    S4 --> INIT : START gleich 0
+    S5 --> INIT : START gleich 0
+    S6 --> INIT : START gleich 0
     
     %% Fehlerbehandlung
     STÖRUNG --> S0 : Störung quittiert
     INIT --> [*] : System Reset
     
-    class S0,S1,S2,S3,S4,S5,S6 normalState
+    class S1,S2,S3,S4,S5,S6 normalState
     class STÖRUNG errorState
     class S0 waitState
 ```
