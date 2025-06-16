@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebVisu Layout - Lager Steuerung</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px; 
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 1100px; 
+            height: 800px;
+            background-color: #e8e8e8;
+            border: 2px solid #333;
+            position: relative;
+            margin: 0 auto;
+        }
+        .title {
+            position: absolute;
+            top: 25px; 
+            left: 25px; 
+            font-size: 22px; 
+            font-weight: bold;
+            color: #000080;
+        }
+        .button {
+            position: absolute;
+            background-color: #4CAF50;
+            border: 2px solid #333;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .toggle-button {
+            background-color: #2196F3;
+        }
+        .led {
+            position: absolute;
+            width: 24px; 
+            height: 24px; 
+            border-radius: 50%;
+            border: 2px solid #333;
+            background-color: #808080;
+        }
+        .led.active {
+            background-color: #00FF00;
+        }
+        .section {
+            position: absolute;
+            border: 2px solid #333;
+            background-color: #ffffff;
+        }
+        .section-title {
+            position: absolute;
+            font-weight: bold;
+            font-size: 16px; 
+            color: #000080;
+        }
+        .text-field {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #333;
+            padding: 4px;
+            font-size: 14px; 
+        }
+        .label {
+            position: absolute;
+            font-size: 14px;
+            color: #333;
+        }
+        .coordinate {
+            position: absolute;
+            font-size: 10px;
+            color: #666;
+            background-color: rgba(255,255,0,0.7);
+            padding: 1px 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Title -->
+        <div class="title">LAGER STEUERUNG</div>
+        <!-- <div class="coordinate" style="top: 20px; left: 300px;">(20,20)</div> -->
+        
+        <!-- START/AUTO Controls -->
+        <div class="button toggle-button" style="top: 70px; left: 30px; width: 120px; height: 50px;">START</div>
+        <!-- <div class="coordinate" style="top: 60px; left: 50px;">(50,80)</div> -->
+        
+        <div class="button toggle-button" style="top: 70px; left: 170px; width: 120px; height: 50px;">AUTOMATIK</div>
+        <!-- <div class="coordinate" style="top: 50px; left: 140px;">(170,80)</div> -->
+        
+        <div class="led" style="top: 70px; left: 310px;"></div>
+        <div class="label" style="top: 75px; left: 345px;">Betrieb</div>
+        <!-- <div class="coordinate" style="top: 60px; left: 290px;">(290,80)</div> -->
+        
+        <!-- Handbetrieb Section -->
+        <div class="section" style="top: 150px; left: 30px; width: 360px; height: 400px;"></div>
+        <div class="section-title" style="top: 160px; left: 45px;">HANDBETRIEB</div>
+        
+        <div class="led" style="top: 200px; left: 25px;"></div>
+        <div class="button" style="top: 200px; left: 55px; width: 90px; height: 35px;">Schieber aus</div>
+        <!-- <div class="coordinate" style="top: 170px; left: 40px;">(40,190)</div> -->
+        
+        <div class="led" style="top: 200px; left: 135px;"></div>
+        <div class="button" style="top: 200px; left: 165px; width: 90px; height: 35px;">Ansaugen</div>
+        <!-- <div class="coordinate" style="top: 170px; left: 140px;">(140,190)</div> -->
+        
+        <div class="led" style="top: 200px; left: 245px;"></div>
+        <div class="button" style="top: 200px; left: 275px; width: 90px; height: 35px;">Loslassen</div>
+        <!-- <div class="coordinate" style="top: 170px; left: 240px;">(240,190)</div> -->
+        
+        <!-- Platzhalter für zukünftigen Button: -->
+        <div class="led" style="top: 245px; left: 165px;"></div>
+        
+        <div class="led" style="top: 255px; left: 25px;"></div>
+        <div class="button" style="top: 255px; left: 55px; width: 90px; height: 35px;">Arm→Lager</div>
+        <!-- <div class="coordinate" style="top: 220px; left: 40px;">(40,240)</div> -->
+        
+        <div class="led" style="top: 255px; left: 135px;"></div>
+        <div class="button" style="top: 255px; left: 165px; width: 90px; height: 35px;">Arm→Band</div>
+        <!-- <div class="coordinate" style="top: 220px; left: 140px;">(140,240)</div> -->
+        
+        <div class="led" style="top: 255px; left: 245px;"></div>
+        <div class="button" style="top: 255px; left: 275px; width: 90px; height: 35px;">Band Start</div>
+        <!-- <div class="coordinate" style="top: 220px; left: 240px;">(240,240)</div> -->
+        
+        <div class="led" style="top: 310px; left: 25px;"></div>
+        <div class="button" style="top: 310px; left: 55px; width: 90px; height: 35px;">Vereinzeler</div>
+        <!-- <div class="coordinate" style="top: 270px; left: 40px;">(40,290)</div> -->
+        
+        <div class="label" style="top: 360px; left: 55px;"> <h3>Band-Geschw:</h3></div>
+        <div class="text-field" style="top: 400px; left: 55px; width: 120px; height: 35px;"></div>
+        <!-- <div class="coordinate" style="top: 320px; left: 150px;">(150,340)</div> -->
+        
+        <!-- System Status Section -->
+        <div class="section" style="top: 150px; left: 410px; width: 340px; height: 450px;"></div>
+        <div class="section-title" style="top: 165px; left: 425px;">SYSTEM STATUS</div>
+        
+        <div class="label" style="top: 200px; left: 425px;"><h2>Teile gezählt</h2></div>
+        <div class="text-field" style="top: 210px; left: 560px; width: 120px; height: 30px;"></div>
+        <!-- <div class="coordinate" style="top: 170px; left: 500px;">(500,190)</div> -->
+        
+        <!-- Timer Display -->
+        <div class="label" style="top: 250px; left: 425px;"><h2>Band Timer</h2></div>
+        <div class="text-field" style="top: 265px; left: 560px; width: 120px; height: 30px;">0.0s</div>
+        
+        <!-- Petrinetz LEDs -->
+        <div class="led" style="top: 300px; left: 435px;"></div>
+        <div class="label" style="top: 302px; left: 470px;">S0-Bereit</div>
+        <!-- <div class="coordinate" style="top: 200px; left: 370px;">(370,220)</div> -->
+        
+        <div class="led" style="top: 340px; left: 435px;"></div>
+        <div class="label" style="top: 342px; left: 470px;">S1-Schieber</div>
+        
+        <div class="led" style="top: 380px; left: 435px;"></div>
+        <div class="label" style="top: 382px; left: 470px;">S2-Arm Lager</div>
+        
+        <div class="led" style="top: 420px; left: 435px;"></div>
+        <div class="label" style="top: 422px; left: 470px;">S3-Ansaugen</div>
+        
+        <div class="led" style="top: 460px; left: 435px;"></div>
+        <div class="label" style="top: 462px; left: 470px;">S4-Transport</div>
+        
+        <div class="led" style="top: 500px; left: 435px;"></div>
+        <div class="label" style="top: 502px; left: 470px;">S5-Ablegen</div>
+        
+        <div class="led" style="top: 540px; left: 435px;"></div>
+        <div class="label" style="top: 542px; left: 470px;">S6-Band</div>
+        
+
+        <!-- I/O Status Section -->
+        <div class="section" style="top: 180px; left: 770px; width: 300px; height: 420px;"></div>
+        <div class="section-title" style="top: 190px; left: 785px;">I/O STATUS</div>
+        
+        <!-- Eingänge -->
+        <div class="label" style="top: 220px; left: 785px; font-weight: bold;">EINGÄNGE:</div>
+        
+        <div class="led" style="top: 250px; left: 795px;"></div>
+        <div class="label" style="top: 252px; left: 830px;">Werkstück angesaugt</div>
+        <!-- <div class="coordinate" style="top: 180px; left: 700px;">(700,200)</div> -->
+        
+        <div class="led" style="top: 280px; left: 795px;"></div>
+        <div class="label" style="top: 282px; left: 830px;">Lager leer</div>
+        
+        <div class="led" style="top: 310px; left: 795px;"></div>
+        <div class="label" style="top: 312px; left: 830px;">Schieber ausgefahren</div>
+        
+        <div class="led" style="top: 340px; left: 795px;"></div>
+        <div class="label" style="top: 342px; left: 830px;">Arm am Lager</div>
+        
+        <div class="led" style="top: 370px; left: 795px;"></div>
+        <div class="label" style="top: 372px; left: 830px;">Arm am Band</div>
+        
+        <div class="led" style="top: 400px; left: 795px;"></div>
+        <div class="label" style="top: 402px; left: 830px;">LS1 frei</div>
+        
+        <!-- Ausgänge -->
+        <div class="label" style="top: 440px; left: 785px; font-weight: bold;">AUSGÄNGE:</div>
+        
+        <div class="led" style="top: 470px; left: 795px;"></div>
+        <div class="label" style="top: 472px; left: 830px;">Schieber ausfahren</div>
+        <!-- <div class="coordinate" style="top: 330px; left: 700px;">(700,350)</div> -->
+        
+        <div class="led" style="top: 500px; left: 795px;"></div>
+        <div class="label" style="top: 502px; left: 830px;">Ansaugen aktiv</div>
+        
+        <div class="led" style="top: 530px; left: 795px;"></div>
+        <div class="label" style="top: 532px; left: 830px;">Arm zum Band</div>
+        
+        <div class="label" style="top: 560px; left: 795px;">Bandgeschw:</div>
+        <div class="text-field" style="top: 560px; left: 920px; width: 70px; height: 25px;">0</div>
+        <!-- <div class="coordinate" style="top: 390px; left: 820px;">(820,410)</div> -->
+</body>
+</html>
