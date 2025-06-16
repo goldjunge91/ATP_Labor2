@@ -49,11 +49,7 @@ Entwicklung eines Steuerungstechnisch Interpretierten Petrinetzes (SIPN) für ei
 ```
 
 
-## Code-Struktur aktuell
-
-### Programmname
-- **Aktuell:** `PROGRAM POU`
-- **Empfehlung:** `PROGRAM Lager_Steuerung` (für bessere Identifikation)
+## Code-Struktur
 
 ### Hauptfeatures implementiert
 ✅ **Betriebsarten-Steuerung** mit S_INIT, S_HAND, S_AUTO  
@@ -61,7 +57,7 @@ Entwicklung eines Steuerungstechnisch Interpretierten Petrinetzes (SIPN) für ei
 ✅ **Timer-Funktionalität** mit 2s Band-Timer  
 ✅ **Zählfunktion** für übergebene Teile  
 ✅ **Handbetrieb** mit Sicherheitsverriegelungen  
-✅ **AUTO-Sperrung** bei aktiver START-Bedingung (Zusatzfeature)
+✅ **AUTO-Sperrung** bei aktiver START-Bedingung 
 
 ### Variablen-Organisation
 ```st
@@ -100,60 +96,11 @@ END_VAR
 - **S5:** Werkstück ablegen
 - **S6:** Band läuft (2s Timer)
 
-## Erweiterte Funktionen implementiert
+### Erweiterte Funktionen implementiert
 
-### ✅ Zusätzliche Sicherheitsfeatures
-- **AUTO-Sperrung:** Verhindert AUTO-Umschaltung bei START=TRUE
 - **Status-Text:** Dynamische Statusanzeige für bessere Diagnose
 - **Kontinuierlicher Timer-Reset:** Saubere Timer-Behandlung
 
-### ⏳ Mögliche Erweiterungen (nicht implementiert)
-- **Timeout-Überwachung:** 30s pro Schritt mit Störungsbehandlung
-- **Warteschlange:** Mehrere Werkstücke auf dem Band
-- **Erweiterte Diagnose:** Detaillierte Fehlermeldungen
-- Teile-Zähler mit Reset
-- Durchsatz-Berechnung
-- Störungsprotokollierung
-- Performance-Überwachung
-
-## Tests durchführen
-
-### Basis-Tests
-```bash
-☐ I/O-Zuordnung prüfen
-☐ Petrinetz-Logik validieren  
-☐ Sicherheitsverriegelungen testen
-☐ Visualisierung funktional
-```
-
-### Funktions-Tests
-```bash
-☐ Handbetrieb: alle Komponenten einzeln
-☐ Automatikbetrieb: kompletter Zyklus
-☐ Zeittransition: 2s Band-Timer
-☐ Zählfunktion: korrekte Inkrementierung
-```
-
-### Robust-Tests  
-```bash
-☐ Störungsbehandlung bei Timeout
-☐ Betriebsarten-Wechsel korrekt
-☐ Kontinuierlicher Betrieb stabil
-☐ Recovery nach Störungen
-```
-
-## Zum Kopieren nach C:\GIT\
-
-Alle Dateien in diesem lokalen Ordner nach `C:\GIT\Labortermin_2\` kopieren:
-
-```
-C:\GIT\Labortermin_2\
-├── README.md
-├── Laborausarbeitung_Versuch2_Petrinetze.md
-├── Lager_Steuerung_Final.st
-├── Petrinetz_Grafiken.md
-└── webvisu.html
-```
 
 ## Bewertungskriterien erfüllt
 ✅ SIPN korrekt entworfen und implementiert  
@@ -164,22 +111,9 @@ C:\GIT\Labortermin_2\
 ✅ Direkte I/O-Zuordnung für bessere Performance
 ⚠️ Programmname "POU" sollte zu "Lager_Steuerung" geändert werden
 
-## Aktueller Status: 95% Laborkonform
-Der Code erfüllt alle Kernforderungen der Laboraufgabe und bietet zusätzliche Sicherheitsfeatures.
 
-## Support
-Bei Fragen zur Implementierung:
-- **Code-Struktur:** Siehe `Lager_Steuerung_Final.st` mit ID-Kommentaren
-- **Petrinetz-Design:** Siehe `Petrinetz_Grafiken.md` für visuelle Darstellung  
-- **Funktions-Tests:** Verwende webvisu.html für Simulation
-- **Theorie:** Vollständige Ausarbeitung in `Laborausarbeitung_Versuch2_Petrinetze.md`
 
-### Kleine Verbesserungen für Laborabgabe
-1. Programmname von "POU" zu "Lager_Steuerung" ändern
-2. Optional: VAR_INPUT/VAR_OUTPUT trennen für bessere Struktur
-3. Optional: Timeout-Überwachung implementieren (siehe Dokumentation)
-
-## Aktuelle Implementierung: Lager_Steuerung_Final.st
+## Aktuelle Implementierung:
 
 ### Code-Highlights
 ```st
