@@ -9,8 +9,8 @@ title: Hauptpetrinetz - Betriebsarten
 stateDiagram-v2
     direction TB
     
-    classDef initialState fill:#90EE90,stroke:#333,stroke-width:2px
-    classDef activeState fill:#FFB6C1,stroke:#333,stroke-width:2px
+    classDef initialState fill:#90EE90,stroke:#333,stroke-width:2px, color:#000000
+    classDef activeState fill:#FFB6C1,stroke:#333,stroke-width:2px, color:#000000
 
     [*] --> S_INIT
     S_INIT: S_INIT Initial
@@ -19,7 +19,7 @@ stateDiagram-v2
     
     S_INIT --> S_HAND : START UND nicht AUTO
     S_INIT --> S_AUTO : START UND AUTO
-    S_HAND --> S_AUTO : nicht START
+    S_HAND --> S_INIT : nicht START
     S_AUTO --> S_INIT : nicht START
     
     S_AUTO --> Automatikzyklus
@@ -42,8 +42,8 @@ title: Automatikzyklus Petrinetz
 ---
 stateDiagram-v2
     direction LR
-    classDef initialState fill:#90EE90,stroke:#333,stroke-width:2px
-    classDef processState fill:#87CEEB,stroke:#333,stroke-width:2px
+    classDef initialState fill:#90EE90,stroke:#333,stroke-width:2px, color:#000000
+    classDef processState fill:#87CEEB,stroke:#333,stroke-width:2px, color:#000000
     
     [*] --> S0
     S0: S0 Bereit
@@ -74,9 +74,9 @@ title: Automatikzyklus mit Bedingungen und Ausgängen
 stateDiagram-v2
     direction TB
     
-    classDef initialState fill:#90EE90,stroke:#333,stroke-width:2px
-    classDef processState fill:#87CEEB,stroke:#333,stroke-width:2px
-    classDef outputState fill:#FFB6C1,stroke:#333,stroke-width:2px
+    classDef initialState fill:#90EE90,stroke:#333,stroke-width:2px, color:#000000
+    classDef processState fill:#87CEEB,stroke:#333,stroke-width:2px, color:#000000
+    classDef outputState fill:#FFB6C1,stroke:#333,stroke-width:2px, color:#000000
     
     [*] --> S0
     S0: S0 Bereit
@@ -108,9 +108,9 @@ title: Synchronisation Lager-Pufferstrecke
 stateDiagram-v2
     direction LR
     
-    classDef lagerState fill:#87CEEB,stroke:#333,stroke-width:2px
-    classDef pufferState fill:#98FB98,stroke:#333,stroke-width:2px
-    classDef bandState fill:#FFB6C1,stroke:#333,stroke-width:2px
+    classDef lagerState fill:#87CEEB,stroke:#333,stroke-width:2px, color:#000000
+    classDef pufferState fill:#98FB98,stroke:#333,stroke-width:2px, color:#000000
+    classDef bandState fill:#FFB6C1,stroke:#333,stroke-width:2px, color:#000000
     
     state Lager {
         LagerS4: S4 (Transport zum Band)
@@ -150,11 +150,9 @@ title: Verriegelungslogik für Handbetrieb
 ---
 stateDiagram-v2
     direction TB
-    
     classDef handState fill:#FFE4B5,stroke:#333,stroke-width:2px,color:#000000
-    classDef lockState fill:#DDA0DD,stroke:#333,stroke-width:2px
-    classDef outputState fill:#98FB98,stroke:#333,stroke-width:2px
-    
+    classDef lockState fill:#DDA0DD,stroke:#333,stroke-width:2px,color:#000000
+    classDef outputState fill:#98FB98,stroke:#333,stroke-width:2px,color:#000000
     state AnsaugVerriegelung {
         A1: Hand_Ansaugen
         A2: Hand_Loslassen
@@ -195,9 +193,9 @@ title: Gesamtsystem Zustandsdiagramm
 stateDiagram-v2
     direction TB
     
-    classDef initState fill:#90EE90,stroke:#333,stroke-width:2px
+    classDef initState fill:#90EE90,stroke:#333,stroke-width:2px,color:#000000
     classDef modeState fill:#FFE4B5,stroke:#333,stroke-width:2px,color:#000000
-    classDef operationState fill:#87CEEB,stroke:#333,stroke-width:2px
+    classDef operationState fill:#87CEEB,stroke:#333,stroke-width:2px,color:#000000
     
     [*] --> SystemReset
     SystemReset: System Reset
@@ -294,10 +292,10 @@ title: Fehlerzustände und Systemabbruch
 stateDiagram-v2
     direction TB
     
-    classDef normalState fill:#90EE90,stroke:#333,stroke-width:2px
-    classDef errorState fill:#FF6B6B,stroke:#333,stroke-width:2px
-    classDef waitState fill:#FFFF99,stroke:#333,stroke-width:2px
-    classDef backgroundBox fill:#F0F0F0,stroke:#666,stroke-width:6px
+    classDef normalState fill:#90EE90,stroke:#333,stroke-width:2px, color:#000000
+    classDef errorState fill:#FF6B6B,stroke:#333,stroke-width:2px, color:#000000
+    classDef waitState fill:#FFFF99,stroke:#333,stroke-width:2px, color:#000000
+    %% classDef backgroundBox fill:#F0F0F0,stroke:#666,stroke-width:6px
     
     [*] --> Fehlerbehandlung
     
@@ -377,9 +375,9 @@ flowchart TD
     Eingänge --> Steuerung
     Steuerung --> Ausgänge
     
-    classDef inputStyle fill:#E6F3FF,stroke:#4A90E2,stroke-width:2px
-    classDef outputStyle fill:#FFE6E6,stroke:#E24A4A,stroke-width:2px
-    classDef controlStyle fill:#E6FFE6,stroke:#4AE24A,stroke-width:2px
+    classDef inputStyle fill:#E6F3FF,stroke:#4A90E2,stroke-width:2px, color:#000000
+    classDef outputStyle fill:#FFE6E6,stroke:#E24A4A,stroke-width:2px, color:#000000
+    classDef controlStyle fill:#E6FFE6,stroke:#4AE24A,stroke-width:2px, color:#000000
     
     class IX10,IX11,IX12,IX13,IX14,IX15,IX02,IX03,IX04 inputStyle
     class QX10,QX11,QX12,QX13,QX14,QW2,QX00,QX01 outputStyle
