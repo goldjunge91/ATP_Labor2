@@ -15,9 +15,6 @@ Entwicklung eines Steuerungstechnisch Interpretierten Petrinetzes (SIPN) für ei
 ### 📊 Visualisierung
 - **`Petrinetz_Grafiken.md`** - ASCII-Darstellungen des Petrinetzes und Zustandsdiagramme
 
-### 🧪 Testing
-- **`Testplan.md`** - Systematischer Testplan mit Checklisten für alle Funktionen
-
 ## System-Funktionen
 
 ### Betriebsarten
@@ -109,15 +106,13 @@ END_VAR
 ✅ ST-Code strukturiert und kommentiert  
 ✅ Zusätzliche Sicherheitsfeatures (AUTO-Sperrung)  
 ✅ Direkte I/O-Zuordnung für bessere Performance
-⚠️ Programmname "POU" sollte zu "Lager_Steuerung" geändert werden
-
 
 
 ## Aktuelle Implementierung:
 
 ### Code-Highlights
 ```st
-PROGRAM POU  (* Empfehlung: umbenennen zu "Lager_Steuerung" *)
+PROGRAM POU
 VAR
     (* Betriebsarten mit Zusatzsicherheit *)
     START : BOOL := FALSE;
