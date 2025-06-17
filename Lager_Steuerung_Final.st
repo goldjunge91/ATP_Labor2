@@ -68,6 +68,8 @@ VAR
     Bandgeschwindigkeit_min : WORD := 0;     (* Konstante: Minimalwert für Bandgeschwindigkeit (Band Stopp) *)
 END_VAR
 
+
+
 (* START Flankenauswertung - ID 04 *)
 START_Flanke := START AND NOT START_Alt;
 START_Alt := START;
@@ -169,7 +171,7 @@ IF AUTOMATIKBETRIEB THEN
     END_IF;
     
     (* T6: Band starten - Zeittransition korrigiert *)
-    IF (S5 AND NOT S6 AND NOT LS1_Start) THEN
+    IF (S5 AND LS1_Start AND NOT S6 ) THEN
         Timer_Band(IN := TRUE, PT := T#2s);
     ELSE
         Timer_Band(IN := FALSE, PT := T#2s);
@@ -189,11 +191,11 @@ IF AUTOMATIKBETRIEB THEN
     (* Ausgangszuweisungen *)
     Schieber_Ausfahren := S1;
     Werkstueck_Ansaugen := S3 OR S4;
-    Werkstueck_Loslassen := S5;
+    Werkstueck_Loslassen := S4 OR S5;
     Transportarm_zum_Lager := S2 OR S3;
     Transportarm_zum_Band := S4 OR S5;
     
-    IF S6 THEN
+   IF S5 OR S6 THEN
         Bandgeschwindigkeit := 32500;
     ELSE
         Bandgeschwindigkeit := 0;
