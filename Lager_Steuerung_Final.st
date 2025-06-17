@@ -1,41 +1,5 @@
 PROGRAM POU
 VAR
-(*
-**Lagerbereich – Eingänge:**
-| Beschreibung                | Adresse   | Datentyp | Logische Zuordnung                               |
-|-----------------------------|-----------|----------|--------------------------------------------------|
-| Werkstueck_Angesaugt        | %IX1.0    | BOOL     | TRUE, wenn Werkstück vom Greifer angesaugt ist   |
-| Lager_Leer                  | %IX1.1    | BOOL     | TRUE, wenn das Lager keine Werkstücke enthält    |
-| Ausschieber_Eingefahren     | %IX1.2    | BOOL     | TRUE, wenn Ausschieber Endposition "eingefahren" erreicht |
-| AusAusschieber_Ausgefahren     | %IX1.3    | BOOL     | TRUE, wenn Ausschieber Endposition "ausgefahren" erreicht |
-| Transportarm_am_Band        | %IX1.4    | BOOL     | TRUE, wenn Transportarm Position "Band" erreicht   |
-| TransportTransportTransportarm_zum_Lager       | %IX1.5    | BOOL     | TRUE, wenn Transportarm Position "Lager" erreicht  |
-
-**Lagerbereich – Ausgänge:**
-| Beschreibung                | Adresse   | Datentyp | Logische Zuordnung                               |
-|-----------------------------|-----------|----------|--------------------------------------------------|
-| Schieber_Ausfahren          | %QX1.0    | BOOL     | TRUE, um den Schieber auszufahren                |
-| Werkstueck_Ansaugen         | %QX1.1    | BOOL     | TRUE, um das Werkstück anzusaugen                |
-| Werkstueck_Loslassen        | %QX1.2    | BOOL     | TRUE, um das Werkstück loszulassen               |
-| TransportTransportarm_zum_Lager      | %QX1.3    | BOOL     | TRUE, um den Transportarm zum Lager zu bewegen   |
-| Transportarm_zum_Band       | %QX1.4    | BOOL     | TRUE, um den Transportarm zum Band zu bewegen    |
-
-**Pufferstrecke – Eingänge:**
-| Beschreibung                | Adresse   | Datentyp | Logische Zuordnung                               |
-|-----------------------------|-----------|----------|--------------------------------------------------|
-| Vereinzeler_ist_auf         | %IX0.0    | BOOL     | TRUE, wenn der Vereinzeler geöffnet ist          |
-| Vereinzeler_ist_zu          | %IX0.1    | BOOL     | TRUE, wenn der Vereinzeler geschlossen ist       |
-| LS1_Start                    | %IX0.2    | BOOL     | TRUE, wenn Lichtschranke 1 frei (nicht belegt) |
-| LS2_Frei                    | %IX0.3    | BOOL     | TRUE, wenn Lichtschranke 2 frei (nicht belegt) |
-| LS3_Frei                    | %IX0.4    | BOOL     | TRUE, wenn Lichtschranke 3 frei (nicht belegt) |
-
-**Pufferstrecke – Ausgänge:**
-| Beschreibung                | Adresse   | Datentyp | Logische Zuordnung                               |
-|-----------------------------|-----------|----------|--------------------------------------------------|
-| Vereinzeler_auf             | %QX0.0    | BOOL     | TRUE, um den Vereinzeler zu öffnen               |
-| Band_Drehrichtung           | %QX0.1    | BOOL     | z.B. 0 für Vorwärtslauf, 1 für Rückwärtslauf    |
-| Bandgeschwindigkeit         | %QW2      | WORD     | Wert von 0 (Stillstand) bis 32500 (max. Geschw.) |
-*)
     (* Betriebsarten *)
     START : BOOL := FALSE; (* Startsignal für das gesamte System *)
     AUTO : BOOL := FALSE; (* Wahlschalter für Automatikbetrieb (TRUE) oder Handbetrieb (FALSE) *)
