@@ -1,0 +1,384 @@
+FUNCTION_BLOCK POU_1
+VAR_INPUT
+    (* --- Steuersignale --- *)
+    EINAUS : BOOL;                      (* Hauptschalter für das System *)
+    
+    (* --- Sensoren --- *)
+    LS_VEREINZELER : BOOL;              (* Lichtschranke 2 vor Vereinzeler (TRUE, wenn frei) *)
+    LS_ENDE : BOOL;                     (* Lichtschranke 3 am Ende (TRUE, wenn frei) *)
+    
+    (* --- Parameter --- *)
+    BAND_GESCHWINDIGKEIT_MAX : WORD := 32500;
+END_VAR
+
+VAR_OUTPUT
+    (* --- Aktoren --- *)
+    VEREINZELER_AUF : BOOL;             (* Befehl: Vereinzeler öffnen *)
+    BANDGESCHWINDIGKEIT : WORD;         (* Befehl: Geschwindigkeit des Bandes *)
+END_VAR
+
+VAR
+    (* --- Interne Baustein-Instanzen --- *)
+    Produktions_Zaehler : CTU;          (* 1. CTU für Produktionszähler *)
+    Timer_Band_10s : TON;               (* 2. TON Timer für Band (10 Sekunden) *)
+    Timer_Vereinzeler_1s : TON;         (* 3. TON Timer für Vereinzeler (1 Sekunde) *)
+    R_TRIG_0 : R_TRIG;                  (* 4. F_TRIG für Flankenauswertung *)
+    RS_Band_Steuerung : RS;             (* 5. RS Flipflop für Band-Steuerung *)
+    Flanke_LS11: R_TRIG;
+    Timer: TOF;
+    Vereinzeln: TOF;
+    
+    (* --- Interne Hilfsvariablen --- *)
+    Pufferbereich_frei : BOOL;             
+    Band_Start_Bedingung : BOOL;
+    Vereinzeler_Start_Bedingung : BOOL;
+    bandan: BOOL;
+
+    (* --- Interne Konstanten --- *)
+    Band_Geschwindigkeit_Min : WORD := 0; (* Band aus *)
+END_VAR
+// FUNCTION_BLOCK POU_1
+// VAR_INPUT
+//   EINAUS : BOOL;                 (* Hauptschalter für System *)
+//   
+// END_VAR
+// 
+// VAR_OUTPUT
+// 
+// END_VAR
+// VAR
+// 	  {attribute 'is_connected' := 'in1'}
+//  	 in1_connection_info: BOOL;
+//     (* Hardware I/O - Pufferstrecke *)
+//     Vereinzeler_ist_auf AT %IX0.0 : BOOL;
+//     Vereinzeler_ist_zu AT %IX0.1 : BOOL;
+//     LS_Start AT %IX0.2 : BOOL;              (* LS1 - Achtung: Platz 6/7 invertiert! *)
+//     LS_Vereinzeler AT %IX0.3 : BOOL;        (* LS2 *)
+// 	LS_Ende AT %IX0.4 : BOOL;              (* Hardware-Eingang! *)
+//     
+//     Vereinzeler_auf AT %QX0.0 : BOOL;
+//     Drehrichtung_Band AT %QX0.1 : BOOL := FALSE;
+//     Bandgeschwindigkeit AT %QW2 : WORD;
+//     
+//     (* BAUSTEINE die Sie verwenden müssen: *)
+//     
+//     (* 1. CTU für Produktionszähler *)
+//     Produktions_Zaehler : CTU;
+//     
+//     (* 2. TON Timer für Band (10 Sekunden) *)
+//     Timer_Band_10s : TON;
+//     
+//     (* 3. TON Timer für Vereinzeler (1 Sekunde) *)
+//     Timer_Vereinzeler_1s : TON;
+//     
+//    (* 4. F_TRIG für Flankenauswertung *)
+// 	R_TRIG_0 : R_TRIG;    
+// 	
+//     (* 5. RS Flipflop für Band-Steuerung *)
+//     RS_Band_Steuerung : RS;
+//      (* Bandgeschwindigkeits-Parameter *)
+//     Band_Geschwindigkeit_Min : WORD := 0;      (* Band aus *)
+//     Band_Geschwindigkeit_Max : WORD := 32500;  (* Band Maximalgeschwindigkeit *)
+//     
+//     (* Hilfsvariablen *)
+//     Pufferbereich_frei : BOOL;             
+//     Band_Start_Bedingung : BOOL;
+//     Vereinzeler_Start_Bedingung : BOOL;
+//     Reset_Produktionszaehler : BOOL;
+//     
+//     (* Für Visualisierung *)
+//     Anzeige_Produktionszahl : WORD;
+//     LED_Band_laeuft : BOOL;
+// 	Anzeige_Restzeit : TIME;
+//     LED_Vereinzeler_aktiv : BOOL;
+//     LED_System_Ein : BOOL;
+// 	neustart: BOOL;
+// 	Flanke_LS11: R_TRIG;
+// 	bandan: BOOL;
+// 	Timer: TOF;
+// 	Vereinzeln: TOF;
+// END_VAR
+
+
+PROGRAM POU
+VAR
+    (* Betriebsarten *)
+    START : BOOL := FALSE; (* Startsignal für das gesamte System *)
+    AUTO : BOOL := FALSE; (* Wahlschalter für Automatikbetrieb (TRUE) oder Handbetrieb (FALSE) *)
+    
+    (* Petrinetz Stellen - Zustände im Automatikbetrieb *)
+    S_INIT : BOOL := TRUE;  (* Initialzustand des Systems / Petrinetzes *)
+    HANDBETRIEBSMODUS : BOOL := FALSE; (* Flag: Handbetrieb ist aktiv *)
+    AUTOMATIKBETRIEB : BOOL := FALSE; (* Flag: Automatikbetrieb ist aktiv *)
+    S0 : BOOL := FALSE;         (* Stelle 0: Grundstellung / Warten auf Werkstück oder Freigabe *)
+    S1 : BOOL := FALSE;     (* Stelle 1: Werkstück wird aus dem Lager ausgeschoben *)
+    S2 : BOOL := FALSE;     (* Stelle 2: Transportarm fährt zum Lager *)
+    S3 : BOOL := FALSE;     (* Stelle 3: Werkstück wird am Lager angesaugt *)
+    S4 : BOOL := FALSE;     (* Stelle 4: Transportarm fährt mit Werkstück zum Band *)
+    S5 : BOOL := FALSE;     (* Stelle 5: Werkstück wird auf dem Band abgelegt *)
+    
+    (* --- Auskommentiert: Diese Zustaende werden jetzt vom Funktionsbaustein POU_1 verwaltet --- *)
+    (* S6 : BOOL := FALSE; *)
+	(* S7 : BOOL := FALSE; *)
+    (* S8 : BOOL := FALSE; *)
+	(* S9 : BOOL := FALSE; *)
+
+    (* +++ Instanz des Funktionsbausteins für die Pufferstrecke (bereits vorhanden) +++ *)
+    Pufferstrecken_Steuerung : POU_1;
+	
+	(* --- Auskommentiert: Diese Deklarationen sind doppelt oder werden vom FB verwaltet --- *)
+    (* Timer und Zaehler *)
+    (* Timer_Band : TON; *)
+    Teile_Zaehler : INT := 0; (* Zaehler bleibt hier, da er im Hauptprogramm verwendet wird *)
+    (* Timer_Band_Zeit : TIME := T#60S; *)
+	
+	(* Timer_Vereinzeler : TON; *)
+	(* Timer_Vereinzeler_Zeit : TIME := T#60S; *)
+    
+    (* Handbetrieb Variablen - Steuersignale für den manuellen Betrieb *)
+    Hand_Schieber_Ausfahren: BOOL := FALSE; (* Manueller Befehl: Schieber ausfahren *)
+    Hand_WK_Ansaugen : BOOL := FALSE;     (* Manueller Befehl: Werkstück ansaugen *)
+    Hand_WK_Loslassen : BOOL := FALSE;    (* Manueller Befehl: Werkstück loslassen *)
+    Hand_Arm_zum_Lager : BOOL := FALSE;    (* Manueller Befehl: Transportarm zum Lager fahren *)
+    Hand_Arm_zum_Band : BOOL := FALSE;     (* Manueller Befehl: Transportarm zum Band fahren *)
+    Hand_Band_Einschalten : BOOL := FALSE;   (* Manueller Befehl: Band einschalten *)
+    Hand_Bandgeschwindigkeit : WORD := 0;       (* Manuell einstellbare Bandgeschwindigkeit *)
+    Hand_Vereinzeler : BOOL := FALSE;  (* Manueller Befehl: Vereinzeler betätigen *)
+    
+    (* Hilfsvariablen *)
+    START_Alt : BOOL := FALSE;         (* Speichert den vorherigen Zustand des START-Signals zur Flankenerkennung *)
+    START_Flanke : BOOL := FALSE;      (* Positive Flanke des START-Signals (TRUE für einen Zyklus) *)
+    AUTO_Alt : BOOL := FALSE;          (* Speichert den vorherigen Zustand des AUTO-Wahlschalters *)
+    AUTO_Gesperrt : BOOL := FALSE;     (* Sperrt die Umschaltung des AUTO-Modus während des Betriebs (START = TRUE) *)
+    Status_Text : STRING := 'System bereit'; (* Textuelle Anzeige des aktuellen Systemstatus für die Visualisierung *)
+    
+    (* Eingaenge - Abbildung der Hardware-Eingänge auf Variablen *)
+    Werkstueck_Angesaugt AT %IX1.0 : BOOL; (* Sensor: Werkstück ist vom Transportarm angesaugt *)
+    Lager_Leer AT %IX1.1 : BOOL;           (* Sensor: Das Lager enthält keine Werkstücke mehr *)
+    Ausschieber_Eingefahren AT %IX1.2: BOOL; (* Sensor: Der Ausschieber ist in der hinteren Endlage (eingefahren) *)
+    Ausschieber_Ausgefahren AT %IX1.3: BOOL; (* Sensor: Der Ausschieber ist in der vorderen Endlage (ausgefahren) *)
+    Transportarm_am_Band AT %IX1.4: BOOL;          (* Sensor: Der Transportarm befindet sich an der Position "Band" *)
+    Transportarm_am_Lager : BOOL := %IX1.5;         (* Sensor: Der Transportarm befindet sich an der Position "Lager" *)
+    Vereinzeler_ist_auf AT %IX0.0:BOOL;      (* Sensor: Der Vereinzeler ist geöffnet *)
+    Vereinzeler_ist_zu AT %IX0.1 : BOOL;       (* Sensor: Der Vereinzeler ist geschlossen *)
+    LS1_Start AT %IX0.2:BOOL;             (* Lichtschranke 1 (Start der Pufferstrecke): TRUE, wenn frei *)
+    LS2_Vereinzeler AT %IX0.3:BOOL;             (* Lichtschranke 2 (vor Vereinzeler): TRUE, wenn frei *)
+    LS3_Ende AT %IX0.4:BOOL;             (* Lichtschranke 3 (Ende der Pufferstrecke): TRUE, wenn frei *)
+    
+    (* Ausgaenge - Abbildung der Variablen auf Hardware-Ausgänge *)
+    Schieber_Ausfahren AT %QX1.0 : BOOL;   (* Aktor: Befehl zum Ausfahren des Schiebers *)
+    Werkstueck_Ansaugen AT %QX1.1:BOOL;  (* Aktor: Befehl zum Ansaugen des Werkstücks *)
+    Werkstueck_Loslassen AT %QX1.2:BOOL; (* Aktor: Befehl zum Loslassen des Werkstücks *)
+    Transportarm_zum_Lager AT %QX1.3: BOOL;        (* Aktor: Befehl zum Bewegen des Transportarms Richtung Lager *)
+    Transportarm_zum_Band AT %QX1.4: BOOL;         (* Aktor: Befehl zum Bewegen des Transportarms Richtung Band *)
+    Band_Drehrichtung AT %QX0.1:BOOL;    (* Aktor: Drehrichtung des Förderbands (Standard = 0) *)
+    Bandgeschwindigkeit AT %QW2:WORD;    (* Aktor: Geschwindigkeit des Förderbands *)
+    Bandgeschwindigkeit_max : WORD := 32500; (* Konstante: Maximalwert für Bandgeschwindigkeit *)
+    Bandgeschwindigkeit_min : WORD := 0;     (* Konstante: Minimalwert für Bandgeschwindigkeit (Band Stopp) *)
+	
+END_VAR
+
+
+
+
+
+(* START Flankenauswertung - ID 04 *)
+START_Flanke := START AND NOT START_Alt;
+START_Alt := START;
+
+(* AUTO-Sperrung bei START=TRUE - ID 03 *)
+IF START THEN
+    AUTO_Gesperrt := TRUE;
+    AUTO := AUTO_Alt;  (* AUTO einfrieren *)
+ELSE
+    AUTO_Gesperrt := FALSE;
+    AUTO_Alt := AUTO;  (* AUTO-Wert merken *)
+END_IF;
+
+(* Initialisierung bei START-Flanke - ID 01,02 *)
+IF START_Flanke THEN
+    IF AUTO THEN
+        S_INIT := FALSE;
+        AUTOMATIKBETRIEB := TRUE;
+        S0 := TRUE;         (* Automatik startet in S0 *)
+        Teile_Zaehler := 0;
+        Status_Text := 'Automatikbetrieb aktiv';
+    ELSE
+        S_INIT := FALSE;
+        HANDBETRIEBSMODUS := TRUE;
+        Status_Text := 'Handbetrieb aktiv';
+    END_IF;
+END_IF;
+
+(* System zuruecksetzen bei START = FALSE *)
+IF NOT START THEN
+    S_INIT := TRUE;
+    HANDBETRIEBSMODUS := FALSE;
+    AUTOMATIKBETRIEB := FALSE;
+    S0 := FALSE; S1 := FALSE; S2 := FALSE; S3 := FALSE;
+    S4 := FALSE; S5 := FALSE;
+    (* S6 := FALSE; -- Auskommentiert, da Zustand nicht mehr verwendet wird *)
+    (* Timer_Band(IN := FALSE, PT := T#2s); -- Auskommentiert, Timer ist jetzt im FB *)
+    Status_Text := 'System bereit';
+END_IF;
+
+(* Ausgaenge zuruecksetzen bei INIT *)
+IF S_INIT THEN
+    Schieber_Ausfahren := FALSE;
+    Werkstueck_Ansaugen := FALSE;
+    Werkstueck_Loslassen := FALSE;
+    Transportarm_zum_Lager := FALSE;
+    Transportarm_zum_Band := TRUE;
+    Vereinzeler_Auf := FALSE;
+    Band_Drehrichtung := FALSE;
+    Bandgeschwindigkeit := 0;
+END_IF;
+
+(* HANDBETRIEB *)
+IF HANDBETRIEBSMODUS THEN
+    Schieber_Ausfahren := Hand_Schieber_Ausfahren;
+    Werkstueck_Ansaugen := Hand_WK_Ansaugen AND NOT Hand_WK_Loslassen;
+    Werkstueck_Loslassen := Hand_WK_Loslassen AND NOT Hand_WK_Ansaugen;
+    Transportarm_zum_Lager := Hand_Arm_zum_Lager AND NOT Hand_Arm_zum_Band;
+    Transportarm_zum_Band := Hand_Arm_zum_Band AND NOT Hand_Arm_zum_Lager;
+    Vereinzeler_Auf := Hand_Vereinzeler;
+    
+    IF Hand_Band_Einschalten THEN
+        Bandgeschwindigkeit := Hand_Bandgeschwindigkeit;
+    ELSE
+        Bandgeschwindigkeit := 0;
+    END_IF;
+END_IF;
+
+(* AUTOMATIKBETRIEB *)
+IF AUTOMATIKBETRIEB THEN
+    (* T1: Werkstueck ausfahren *)
+    IF (S0 AND NOT S1 AND NOT Lager_Leer AND LS1_Start) THEN
+        S0 := FALSE;
+        S1 := TRUE;
+    END_IF;
+    
+    (* T2: Transportarm zum Lager *)
+    IF (S1 AND NOT S2 AND Ausschieber_Ausgefahren) THEN
+        S1 := FALSE;
+        S2 := TRUE;
+    END_IF;
+    
+    (* T3: Werkstueck ansaugen *)
+    IF (S2 AND NOT S3 AND Transportarm_zum_Lager AND NOT Ausschieber_Ausgefahren) THEN
+        S2 := FALSE;
+        S3 := TRUE;
+    END_IF;
+    
+    (* T4: Transport zum Band *)
+    IF (S3 AND NOT S4 AND Werkstueck_Angesaugt) THEN
+        S3 := FALSE;
+        S4 := TRUE;
+    END_IF;
+
+    (* --- HINWEIS: Der auskommentierte Block unten ist die alte Logik und kann spaeter entfernt werden --- *)
+//     
+//     (* T5: Werkstueck ablegen *)
+//     IF (S4 AND NOT S5 AND Transportarm_am_Band) THEN
+//         S4 := FALSE;
+//         S5 := TRUE;
+//         Teile_Zaehler := Teile_Zaehler + 1;
+//     END_IF;
+//     
+//     (* T6: Band starten - Zeittransition korrigiert *)
+//     IF (S5 AND LS1_Start AND NOT S6 ) THEN
+//         Timer_Band(IN := TRUE, PT := T#2s);
+//     ELSE
+//         Timer_Band(IN := FALSE, PT := T#2s);
+//     END_IF;
+//     
+//     IF Timer_Band.Q THEN
+//         S5 := FALSE;
+//         S6 := TRUE;
+//     END_IF;
+// 		
+//     (* T7: Zyklus beenden *)
+//     IF (S6 AND NOT S0) THEN
+//         S6 := FALSE;
+//         S0 := TRUE;
+//     END_IF;
+//     
+//     (* Ausgangszuweisungen *)
+//     Schieber_Ausfahren := S1;
+//     Werkstueck_Ansaugen := S3 OR S4;
+//     Werkstueck_Loslassen := S4 OR S5;
+//     Transportarm_zum_Lager := S2 OR S3;
+//     Transportarm_zum_Band := S4 OR S5;
+//     
+//    IF S5 OR S6 THEN
+//         Bandgeschwindigkeit := 32500;
+//     ELSE
+//         Bandgeschwindigkeit := 0;
+//     END_IF;
+// END_IF;
+
+    (* T5: Werkstueck ablegen *)
+    IF (S4 AND NOT S5 AND Transportarm_am_Band) THEN
+        S4 := FALSE;
+        S5 := TRUE;
+        Teile_Zaehler := Teile_Zaehler + 1;
+    END_IF;
+    
+    (* --- GEÄNDERT: Die Logik für Bandstart und Zyklusende wird vereinfacht. --- *)
+    (* Sobald das Werkstück in S5 abgelegt ist, springt die Steuerung zurück nach S0. *)
+    (* Die Verantwortung für das Band wird an den Funktionsbaustein POU_1 übergeben. *)
+    IF (S5 AND NOT S0) THEN
+        S5 := FALSE;
+        S0 := TRUE;
+    END_IF;
+    
+    (* --- ENTFERNT: Die alte Timer- und Zustandslogik für S6, S7, S8. --- *)
+    
+    (* Ausgangszuweisungen für das Petrinetz (Lager-Teil) *)
+    Schieber_Ausfahren := S1;
+    Werkstueck_Ansaugen := S3 OR S4;
+    Werkstueck_Loslassen := S4 OR S5;
+    Transportarm_zum_Lager := S2 OR S3;
+    Transportarm_zum_Band := S4 OR S5;
+    
+    (* --- ENTFERNT: Die alte Bandgeschwindigkeits-Zuweisung. --- *)
+    (* Diese wird jetzt vom Funktionsbaustein POU_1 gesteuert. *)
+END_IF;
+
+
+(* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
+(* +++ NEU: Aufruf und Verwaltung des Funktionsbausteins Pufferstrecke +++ *)
+(* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
+
+(* Dieser Block wird in jedem Zyklus ausgeführt. *)
+
+(* 1. Eingaenge des Funktionsbausteins zuweisen ("Verdrahtung") *)
+Pufferstrecken_Steuerung.EINAUS := AUTOMATIKBETRIEB; (* FB ist aktiv, wenn Automatik laeuft *)
+Pufferstrecken_Steuerung.LS_START := LS1_Start;
+Pufferstrecken_Steuerung.LS_VEREINZELER := LS2_Vereinzeler;
+Pufferstrecken_Steuerung.LS_ENDE := LS3_Ende;
+Pufferstrecken_Steuerung.VEREINZELER_IST_AUF := Vereinzeler_ist_auf;
+Pufferstrecken_Steuerung.VEREINZELER_IST_ZU := Vereinzeler_ist_zu;
+(* Weitere Eingaenge wie NEUSTART oder RESET koennten hier zugewiesen werden *)
+(* Pufferstrecken_Steuerung.NEUSTART := ...; *)
+
+(* 2. Funktionsbaustein ausfuehren *)
+Pufferstrecken_Steuerung();
+
+IF AUTOMATIKBETRIEB THEN
+    Bandgeschwindigkeit := Pufferstrecken_Steuerung.BANDGESCHWINDIGKEIT;
+    
+    (* --- GEÄNDERT: Explizite Steuerung für Öffnen und Schließen --- *)
+    IF Pufferstrecken_Steuerung.VEREINZELER_AUF THEN
+        // Befehl zum ÖFFNEN
+        Vereinzeler_Auf := TRUE;
+    ELSE
+        // Befehl zum SCHLIESSEN
+        Vereinzeler_Auf := FALSE;
+    END_IF;
+    
+    Band_Drehrichtung := Pufferstrecken_Steuerung.DREHRICHTUNG_BAND;
+    
+    (* Hier könnten auch die Visualisierungs-Variablen aus dem FB ausgelesen werden *)
+    (* z.B. Anzeige_Produktionszahl := Pufferstrecken_Steuerung.ANZEIGE_PRODUKTIONSZAHL; *)
+END_IF;
