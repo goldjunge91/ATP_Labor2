@@ -1,0 +1,31 @@
+FUNCTION_BLOCK POU_1
+VAR_INPUT
+    EINAUS , Sys_Run : BOOL;
+    LS1 : BOOL;
+    LS2 : BOOL;
+    LS3 : BOOL;
+
+END_VAR
+VAR_OUTPUT
+    ConveyorSpeed : WORD;
+    ConveyorDirection : BOOL;
+    SeparatorOpen : BOOL;
+    Productcount: WORD;
+	Bandan: BOOL;
+	
+END_VAR
+VAR
+    TimerConveyor : TON;
+    TimerSeparator : TON;
+    RisingEdgeLS1 : R_TRIG;
+    RisingEdgeLS2 : R_TRIG;
+    RisingEdgeLS3 : R_TRIG;
+	TON_0: TP;
+	R_TRIG_0: R_TRIG;
+	TRIG: R_TRIG;
+	Toggle_ON_OFF: RS;
+	Band_Akt : TP;
+	
+	Pro_counter: CTU;
+END_VAR
+
