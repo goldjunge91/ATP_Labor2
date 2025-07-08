@@ -353,28 +353,57 @@ ELSE
 END_IF;
 ```
 
-### Meine Funktionsbaustein-Integration
+### Meine Funktionsbaustein-Variablen.
 ```st
-(* Meine FB-Eingänge versorgen *)
-Pufferstrecken_Steuerung.EINAUS := AUTOMATIKBETRIEB;
-Pufferstrecken_Steuerung.RESET_PRODUKTIONSZAEHLER := NOT START;
-Pufferstrecken_Steuerung.LS1_START := LS1_Start;
-Pufferstrecken_Steuerung.LS2_VEREINZELER := LS2_Vereinzeler;
-Pufferstrecken_Steuerung.LS3_ENDE := LS3_Ende;
+FUNCTION_BLOCK Vereinzeln_FUP_FB
+VAR_INPUT
+    (* --- Steuersignale --- *)
+    EINAUS : BOOL;                      (* Hauptschalter für das System *)
+    RESET_PRODUKTIONSZAEHLER : BOOL;    (* Signal zum Zurücksetzen des Zählers *)
+    (* --- Sensoren (vorher Hardware-Eingänge) --- *)
+    LS1_START : BOOL;                    (* Lichtschranke 1 am Start *)
+    LS2_VEREINZELER : BOOL;              (* Lichtschranke 2 vor dem Vereinzeler *)
+	LS3_ENDE : BOOL;
+END_VAR
 
-(* Mein FB ausführen *)
-Pufferstrecken_Steuerung();
+VAR_OUTPUT
+    (* --- Aktoren (vorher Hardware-Ausgänge) --- *)
+    VEREINZELER_AUF : BOOL;             (* Befehl: Vereinzeler öffnen *)
+    Bandgeschwindigkeit : WORD;         (* Befehl: Geschwindigkeit des Bandes *)
+    (* --- Statusanzeigen für Visualisierung --- *)
+    ANZEIGE_PRODUKTIONSZAHL : WORD := 0;     (* Aktuelle Produktionszahl *)
+    LED_BAND_LAEUFT : BOOL;             (* Status: Band läuft *)
+    ANZEIGE_RESTZEIT : TIME;            (* Restzeitanzeige für Timer *)
+    LED_VEREINZELER_AKTIV : BOOL;       (* Status: Vereinzeler ist aktiv *)
+	ANZEIGE_BAND_TIMER: TIME;
+END_VAR
 
-(* Meine FB-Ausgänge übernehmen *)
-IF AUTOMATIKBETRIEB THEN
-    Bandgeschwindigkeit := Pufferstrecken_Steuerung.Bandgeschwindigkeit;
-    Vereinzeler_Auf := Pufferstrecken_Steuerung.VEREINZELER_AUF;
-    Teile_Zaehler := Pufferstrecken_Steuerung.ANZEIGE_PRODUKTIONSZAHL;
-END_IF;
+VAR
+    (* --- Interne Baustein-Instanzen (1:1 aus FUP) --- *)
+    Produktions_Zaehler : CTU;
+    RS_Band_Steuerung : RS;             (* RS-Flipflop für Toggle-Schalter *)
+    Band_Timer: TOF;                    (* Instanz für den 10s Band-Timer *)
+    Vereinzeln_Timer: TOF;              (* Instanz für den 1s Vereinzeler-Timer *)
+    neustart : BOOL;                    (* Interne Variable für den Toggle-Zustand *)
+	R_TRIG_RESET: R_TRIG;
+	R_TRIG_SET: R_TRIG;
+    (* --- Interne Hilfsvariablen (1:1 aus FUP) --- *)
+    Band_Start_Bedingung : BOOL;
+    Vereinzeler_Start_Bedingung : BOOL;
+    bandan: BOOL;
+
+    (* --- Interne Konstanten --- *)
+    Band_Geschwindigkeit_Min : WORD := 0;
+    Band_Geschwindigkeit_Max : WORD := 32500;
+	Zeit_Band_Nachlauf : TIME := T#5S;
+    Zeit_Vereinzeler_Oeffnung : TIME := T#3S;
+
+END_VAR
 ```
 
 
 ```ST
+
 PROGRAM POU
 VAR
 (* +++ Instanz des Funktionsbausteins für die Pufferstrecke (bereits vorhanden) +++ *)
@@ -534,7 +563,7 @@ IF AUTOMATIKBETRIEB THEN
     
     (* T3: Werkstueck ansaugen *)
 //	IF (S2 AND NOT S3 AND Transportarm_am_Lager AND Ausschieber_Eingefahren) THEN
-    IF (S2 AND Transportarm_am_Lager AND Ausschieber_Eingefahren AND NOT S3 AND NOT Ausschieber_Ausgefahren) THEN
+    IF (S2 AND Ausschieber_Eingefahren AND NOT S3 AND NOT Ausschieber_Ausgefahren) THEN
         S2 := FALSE;
         S3 := TRUE;
     END_IF;
@@ -574,15 +603,15 @@ IF AUTOMATIKBETRIEB THEN
     (* +++ NEU: DEBUG-Abfrage, um die Pufferstrecke zu überspringen +++ *)
     (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
     IF S5 AND DEBUG_Ueberspringe_Puffer THEN
-        S5 := FALSE; (* Deaktiviere den aktuellen Zustand S5 *)
-        S0 := TRUE;  (* Springe direkt zum Zyklus-Anfang zurück *)
+        S5 := FALSE; 
+       S0 := TRUE;  
     END_IF;
     (* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
 	
     (* T6: Transportphase SOFORT starten, wenn LS1 belegt ist *)
 	IF (S5 AND NOT LS1_Start AND NOT S6) THEN
 		S5 := FALSE;
-		S6 := TRUE;
+		S0 := TRUE;
 	END_IF;
  
     (* ######################################################################## *)
@@ -649,8 +678,8 @@ IF AUTOMATIKBETRIEB THEN
 
     (* Ausgangszuweisungen *)
     Schieber_Ausfahren := S1; // S1 OR S2 OR (S3 AND NOT Werkstueck_Angesaugt);
-    Werkstueck_Ansaugen := (S3 OR S4) AND Transportarm_am_Lager AND Ausschieber_Eingefahren; // S3 OR S4;
-	Werkstueck_Loslassen :=  S5 AND Transportarm_am_Band; 
+    Werkstueck_Ansaugen := (S3 OR S4)  AND Ausschieber_Eingefahren; // S3 OR S4;
+	Werkstueck_Loslassen :=  S5 OR S4; 
     Transportarm_zum_Lager := S2 OR S3;
     Transportarm_zum_Band := S4 OR S5;
 END_IF
@@ -660,14 +689,17 @@ END_IF
 (* Dieser Block steht außerhalb der Lager-Schrittkette und wird in jedem Zyklus ausgeführt *)
 
 (* 1. FB-Eingänge versorgen *)
-Pufferstrecken_Steuerung.EINAUS:= AUTOMATIKBETRIEB;
-Pufferstrecken_Steuerung.RESET_PRODUKTIONSZAEHLER := NOT START;
-Pufferstrecken_Steuerung.LS1_START:= LS1_Start;
-Pufferstrecken_Steuerung.LS2_VEREINZELER:= LS2_Vereinzeler;
-Pufferstrecken_Steuerung.LS3_ENDE:= LS3_Ende;
+// Pufferstrecken_Steuerung.EINAUS:= AUTOMATIKBETRIEB;
+// Pufferstrecken_Steuerung.RESET_PRODUKTIONSZAEHLER := NOT START;
+// Pufferstrecken_Steuerung.LS1_START:= LS1_Start;
+// Pufferstrecken_Steuerung.LS2_VEREINZELER:= LS2_Vereinzeler;
+// Pufferstrecken_Steuerung.LS3_ENDE:= LS3_Ende;
+//Pufferstrecken_Steuerung.neustarzt
 
-(* 2. FB ausführen *)
-Pufferstrecken_Steuerung();
+
+//Pufferstrecken_Steuerung(EINAUS:=AUTOMATIKBETRIEB,RESET_PRODUKTIONSZAEHLER:=NOT START, LS1_START:= LS1_Start, LS2_VEREINZELER:= LS2_Vereinzeler, LS3_ENDE:=
+Pufferstrecken_Steuerung(EINAUS:=AUTOMATIKBETRIEB,RESET_PRODUKTIONSZAEHLER:=NOT START, LS1_START:= LS1_Start, LS2_VEREINZELER:= LS2_Vereinzeler, LS3_ENDE:= LS3_Ende);
+
 
 (* 3. FB-Ausgänge an die Aktoren der Pufferstrecke weitergeben *)
 IF AUTOMATIKBETRIEB THEN
